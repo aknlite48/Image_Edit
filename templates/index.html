@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstructPix2Pix Editor</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="logo">
+                <span class="material-icons">auto_fix_high</span>
+                <h1>InstructPix2Pix</h1>
+            </div>
+            <div class="nav-links">
+                <a href="https://github.com/timbrooks/instruct-pix2pix" target="_blank">GitHub</a>
+                <a href="https://huggingface.co/timbrooks/instruct-pix2pix" target="_blank">Hugging Face</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <h1>Selective Image Editing</h1>
+            <p>Edit specific portions of your image using text instructions with InstructPix2Pix on Apple Silicon</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container">
+        <div class="app-wrapper">
+            <!-- Controls Panel -->
+            <div class="panel controls-panel">
+                <div class="panel-header">
+                    <span class="material-icons">settings</span>
+                    <h2>Controls</h2>
+                </div>
+                <div class="panel-body">
+                    <!-- Step 1: Upload Image -->
+                    <div class="step-container">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Upload Image</h3>
+                            <div class="file-upload-container">
+                                <input type="file" id="image-upload" accept="image/*" class="file-input">
+                                <label for="image-upload" class="file-upload-label">
+                                    <span class="material-icons">cloud_upload</span>
+                                    <span>Choose an image or drag it here</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Create Mask -->
+                    <div class="step-container">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Create Mask</h3>
+                            <p>Draw on the image to create a selection mask.</p>
+                            <div class="brush-controls">
+                                <label>
+                                    <span>Brush Size:</span>
+                                    <div class="slider-container">
+                                        <input type="range" id="brush-size" min="1" max="50" value="15">
+                                        <span id="brush-size-value">15</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="button-group">
+                                <button id="clear-mask" class="btn secondary">
+                                    <span class="material-icons">clear</span>
+                                    Clear Mask
+                                </button>
+                                <button id="undo-last" class="btn secondary">
+                                    <span class="material-icons">undo</span>
+                                    Undo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Edit Instruction -->
+                    <div class="step-container">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Edit Instruction</h3>
+                            <div class="form-group">
+                                <input type="text" id="prompt-input" placeholder="e.g., Turn the sky blue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Advanced Settings -->
+                    <div class="step-container">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <div class="accordion">
+                                <div class="accordion-header" id="advanced-header">
+                                    <h3>Advanced Settings</h3>
+                                    <span class="material-icons">expand_more</span>
+                                </div>
+                                <div class="accordion-content" id="advanced-content">
+                                    <div class="form-group">
+                                        <label>
+                                            <span>Image Guidance:</span>
+                                            <div class="slider-container">
+                                                <input type="range" id="image-guidance" min="0.0" max="5.0" step="0.1" value="1.5">
+                                                <span id="image-guidance-value" class="slider-value">1.5</span>
+                                            </div>
+                                        </label>
+                                        <p class="help-text">Higher value = more faithful to original image</p>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>
+                                            <span>Text Guidance:</span>
+                                            <div class="slider-container">
+                                                <input type="range" id="text-guidance" min="1.0" max="20.0" step="0.5" value="7.5">
+                                                <span id="text-guidance-value" class="slider-value">7.5</span>
+                                            </div>
+                                        </label>
+                                        <p class="help-text">Higher value = follow instruction more closely</p>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label>
+                                            <span>Steps:</span>
+                                            <div class="slider-container">
+                                                <input type="range" id="steps" min="5" max="50" step="1" value="20">
+                                                <span id="steps-value" class="slider-value">20</span>
+                                            </div>
+                                        </label>
+                                        <p class="help-text">Higher value = better quality but slower</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Apply Edit -->
+                    <div class="step-container">
+                        <div class="step-number">5</div>
+                        <div class="step-content">
+                            <div class="actions">
+                                <button id="process-image" class="btn primary">
+                                    <span class="material-icons">auto_fix_high</span>
+                                    Apply Edit
+                                </button>
+                                <button id="download-result" class="btn secondary" disabled>
+                                    <span class="material-icons">download</span>
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Message -->
+                    <div class="status-container">
+                        <div id="status-message" class="status-message">
+                            Upload an image to begin.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Panel -->
+            <div class="panel canvas-panel">
+                <div class="panel-header">
+                    <span class="material-icons">image</span>
+                    <h2>Image Editor</h2>
+                </div>
+                <div class="panel-body">
+                    <div class="canvas-container">
+                        <!-- Original image with drawing capability -->
+                        <div class="canvas-wrapper">
+                            <div class="canvas-header">
+                                <h3>Original</h3>
+                                <span class="help-badge" title="Draw on this image to create a mask">
+                                    <span class="material-icons">help_outline</span>
+                                </span>
+                            </div>
+                            <div class="canvas-content">
+                                <canvas id="input-canvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Result image -->
+                        <div class="canvas-wrapper">
+                            <div class="canvas-header">
+                                <h3>Result</h3>
+                                <div id="progress-indicator" class="progress-indicator">
+                                    <div class="progress-bar">
+                                        <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
+                                    </div>
+                                    <div id="progress-percentage">0%</div>
+                                </div>
+                            </div>
+                            <div class="canvas-content">
+                                <canvas id="result-canvas"></canvas>
+                                <div id="result-placeholder" class="placeholder-message">
+                                    <span class="material-icons">image</span>
+                                    <p>Result will appear here</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>Powered by InstructPix2Pix running on macOS with Apple Silicon</p>
+        </div>
+    </footer>
+
+    <!-- Hidden mask canvas -->
+    <canvas id="mask-canvas" style="display: none;"></canvas>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p id="loading-message">Loading model...</p>
+        </div>
+    </div>
+
+    <!-- Script -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
