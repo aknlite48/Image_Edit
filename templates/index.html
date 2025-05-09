@@ -3,212 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InstructPix2Pix Editor</title>
-    <!-- Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>PixelAlchemy | AI-Powered Image Editing Studio</title>
     <!-- Google Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap">
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Rounded" rel="stylesheet">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Top Navigation Bar -->
-    <nav class="navbar">
+    <!-- Top Navigation -->
+    <header class="app-header">
         <div class="container">
             <div class="logo">
-                <span class="material-icons">auto_fix_high</span>
-                <h1>InstructPix2Pix</h1>
+                <div class="logo-icon">
+                    <span class="material-symbols-rounded">auto_awesome</span>
+                </div>
+                <div class="logo-text">
+                    <h1>PixelAlchemy</h1>
+                    <span class="logo-subtitle">AI Studio</span>
+                </div>
             </div>
-            <div class="nav-links">
-                <a href="https://github.com/timbrooks/instruct-pix2pix" target="_blank">GitHub</a>
-                <a href="https://huggingface.co/timbrooks/instruct-pix2pix" target="_blank">Hugging Face</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <header class="hero">
-        <div class="container">
-            <h1>Selective Image Editing</h1>
-            <p>Edit specific portions of your image using text instructions with InstructPix2Pix on Apple Silicon</p>
+            <nav class="main-nav">
+                <a href="#" class="active">Editor</a>
+                <a href="#" onclick="showModal('about-modal')">About</a>
+                <a href="#" onclick="showModal('tips-modal')">Tips & Tricks</a>
+                <a href="https://github.com/timbrooks/instruct-pix2pix" target="_blank" class="github-link">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path fill="currentColor" d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.268 2.75 1.026A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.026 2.747-1.026.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.137 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"></path>
+                    </svg>
+                    <span>GitHub</span>
+                </a>
+            </nav>
+            <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light mode">
+                <span class="material-symbols-rounded light-icon">light_mode</span>
+                <span class="material-symbols-rounded dark-icon">dark_mode</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="container">
-        <div class="app-wrapper">
-            <!-- Controls Panel -->
-            <div class="panel controls-panel">
-                <div class="panel-header">
-                    <span class="material-icons">settings</span>
-                    <h2>Controls</h2>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h2>Transform Images with AI <span class="gradient-text">Magic</span></h2>
+                <p>Edit your photos with the power of natural language. Simply describe what you want to change.</p>
+            </div>
+            <div class="hero-animation">
+                <div class="orbit">
+                    <div class="planet"></div>
+                    <div class="planet"></div>
+                    <div class="planet"></div>
                 </div>
-                <div class="panel-body">
-                    <!-- Step 1: Upload Image -->
-                    <div class="step-container">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
+            </div>
+        </div>
+    </section>
+
+    <!-- Main App Container -->
+    <main class="app-container container">
+        <div class="editor-layout">
+            <!-- Left Panel: Controls -->
+            <aside class="control-panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-tab="edit-tab">
+                        <span class="material-symbols-rounded">edit</span>
+                        <span>Edit</span>
+                    </button>
+                    <button class="panel-tab" data-tab="history-tab">
+                        <span class="material-symbols-rounded">history</span>
+                        <span>History</span>
+                    </button>
+                    <button class="panel-tab" data-tab="settings-tab">
+                        <span class="material-symbols-rounded">settings</span>
+                        <span>Settings</span>
+                    </button>
+                </div>
+                
+                <div class="panel-content active" id="edit-tab">
+                    <div class="panel-section">
+                        <div class="section-header">
+                            <span class="material-symbols-rounded">add_photo_alternate</span>
                             <h3>Upload Image</h3>
-                            <div class="file-upload-container">
-                                <input type="file" id="image-upload" accept="image/*" class="file-input">
-                                <label for="image-upload" class="file-upload-label">
-                                    <span class="material-icons">cloud_upload</span>
-                                    <span>Choose an image or drag it here</span>
-                                </label>
-                            </div>
+                        </div>
+                        <div class="upload-container">
+                            <input type="file" id="image-upload" accept="image/*" class="file-input">
+                            <label for="image-upload" class="upload-area">
+                                <div class="upload-content">
+                                    <span class="material-symbols-rounded">cloud_upload</span>
+                                    <span>Drag & drop or click to upload</span>
+                                </div>
+                            </label>
                         </div>
                     </div>
 
-                    <!-- Step 2: Create Mask -->
-                    <div class="step-container">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h3>Create Mask</h3>
-                            <p>Draw on the image to create a selection mask.</p>
-                            <div class="brush-controls">
-                                <label>
-                                    <span>Brush Size:</span>
-                                    <div class="slider-container">
-                                        <input type="range" id="brush-size" min="1" max="50" value="15">
-                                        <span id="brush-size-value">15</span>
-                                    </div>
-                                </label>
+                    <div class="panel-section">
+                        <div class="section-header">
+                            <span class="material-symbols-rounded">brush</span>
+                            <h3>Mask Tools</h3>
+                        </div>
+                        <div class="tools-container">
+                            <div class="slider-control">
+                                <label for="brush-size">Brush Size</label>
+                                <div class="slider-row">
+                                    <input type="range" id="brush-size" min="1" max="50" value="15">
+                                    <span id="brush-size-value">15</span>
+                                </div>
                             </div>
                             <div class="button-group">
                                 <button id="clear-mask" class="btn secondary">
-                                    <span class="material-icons">clear</span>
-                                    Clear Mask
+                                    <span class="material-symbols-rounded">layers_clear</span>
+                                    Clear
                                 </button>
                                 <button id="undo-last" class="btn secondary">
-                                    <span class="material-icons">undo</span>
+                                    <span class="material-symbols-rounded">undo</span>
                                     Undo
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 3: Edit Instruction -->
-                    <div class="step-container">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h3>Edit Instruction</h3>
-                            <div class="form-group">
-                                <input type="text" id="prompt-input" placeholder="e.g., Turn the sky blue">
+                    <div class="panel-section">
+                        <div class="section-header">
+                            <span class="material-symbols-rounded">magic_button</span>
+                            <h3>Edit Instructions</h3>
+                        </div>
+                        <div class="prompt-container">
+                            <textarea id="prompt-input" placeholder="Describe your desired edit (e.g., 'Turn the sky blue', 'Add flowers to the garden')"></textarea>
+                            
+                            <div class="example-prompts">
+                                <span class="hint">Try these examples:</span>
+                                <div class="example-chips">
+                                    <button class="example-chip" data-prompt="Make the background blurry">Background blur</button>
+                                    <button class="example-chip" data-prompt="Change the sky to sunset colors">Sunset sky</button>
+                                    <button class="example-chip" data-prompt="Make it look like winter with snow">Winter effect</button>
+                                    <button class="example-chip" data-prompt="Convert to oil painting style">Oil painting</button>
+                                    <button class="example-chip" data-prompt="Change hair color to blonde">Blonde hair</button>
+                                    <button class="example-chip" data-prompt="Add lens flare effect">Lens flare</button>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 4: Advanced Settings -->
-                    <div class="step-container">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            <div class="accordion">
-                                <div class="accordion-header" id="advanced-header">
+                    <div class="panel-section">
+                        <div class="accordion">
+                            <div class="accordion-header" id="advanced-header">
+                                <div class="section-header">
+                                    <span class="material-symbols-rounded">tune</span>
                                     <h3>Advanced Settings</h3>
-                                    <span class="material-icons">expand_more</span>
                                 </div>
-                                <div class="accordion-content" id="advanced-content">
-                                    <div class="form-group">
-                                        <label>
-                                            <span>Image Guidance:</span>
-                                            <div class="slider-container">
-                                                <input type="range" id="image-guidance" min="0.0" max="5.0" step="0.1" value="1.5">
-                                                <span id="image-guidance-value" class="slider-value">1.5</span>
-                                            </div>
-                                        </label>
-                                        <p class="help-text">Higher value = more faithful to original image</p>
+                                <span class="material-symbols-rounded toggle-icon">expand_more</span>
+                            </div>
+                            <div class="accordion-content" id="advanced-content">
+                                <div class="slider-control">
+                                    <label for="image-guidance">
+                                        Image Guidance 
+                                        <span class="tooltip" data-tooltip="Higher values preserve more of the original image">?</span>
+                                    </label>
+                                    <div class="slider-row">
+                                        <input type="range" id="image-guidance" min="0.0" max="5.0" step="0.1" value="1.5">
+                                        <span id="image-guidance-value">1.5</span>
                                     </div>
+                                </div>
 
-                                    <div class="form-group">
-                                        <label>
-                                            <span>Text Guidance:</span>
-                                            <div class="slider-container">
-                                                <input type="range" id="text-guidance" min="1.0" max="20.0" step="0.5" value="7.5">
-                                                <span id="text-guidance-value" class="slider-value">7.5</span>
-                                            </div>
-                                        </label>
-                                        <p class="help-text">Higher value = follow instruction more closely</p>
+                                <div class="slider-control">
+                                    <label for="text-guidance">
+                                        Text Guidance
+                                        <span class="tooltip" data-tooltip="Higher values follow the prompt more closely">?</span>
+                                    </label>
+                                    <div class="slider-row">
+                                        <input type="range" id="text-guidance" min="1.0" max="20.0" step="0.5" value="7.5">
+                                        <span id="text-guidance-value">7.5</span>
                                     </div>
+                                </div>
 
-                                    <div class="form-group">
-                                        <label>
-                                            <span>Steps:</span>
-                                            <div class="slider-container">
-                                                <input type="range" id="steps" min="5" max="50" step="1" value="20">
-                                                <span id="steps-value" class="slider-value">20</span>
-                                            </div>
-                                        </label>
-                                        <p class="help-text">Higher value = better quality but slower</p>
+                                <div class="slider-control">
+                                    <label for="steps">
+                                        Processing Steps
+                                        <span class="tooltip" data-tooltip="Higher values improve quality but take longer">?</span>
+                                    </label>
+                                    <div class="slider-row">
+                                        <input type="range" id="steps" min="5" max="50" step="1" value="20">
+                                        <span id="steps-value">20</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Step 5: Apply Edit -->
-                    <div class="step-container">
-                        <div class="step-number">5</div>
-                        <div class="step-content">
-                            <div class="actions">
-                                <button id="process-image" class="btn primary">
-                                    <span class="material-icons">auto_fix_high</span>
-                                    Apply Edit
-                                </button>
-                                <button id="download-result" class="btn secondary" disabled>
-                                    <span class="material-icons">download</span>
-                                    Download
-                                </button>
-                            </div>
+                    <div class="panel-section action-section">
+                        <div class="action-buttons">
+                            <button id="process-image" class="btn primary">
+                                <span class="material-symbols-rounded">auto_fix_high</span>
+                                Apply Edit
+                            </button>
+                            <button id="download-result" class="btn secondary" disabled>
+                                <span class="material-symbols-rounded">download</span>
+                                Download
+                            </button>
                         </div>
-                    </div>
-
-                    <!-- Status Message -->
-                    <div class="status-container">
-                        <div id="status-message" class="status-message">
-                            Upload an image to begin.
+                        <div id="status-container">
+                            <div id="status-message" class="status-message">
+                                Upload an image to begin.
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Canvas Panel -->
-            <div class="panel canvas-panel">
-                <div class="panel-header">
-                    <span class="material-icons">image</span>
-                    <h2>Image Editor</h2>
+                
+                <div class="panel-content" id="history-tab">
+                    <div class="history-empty">
+                        <span class="material-symbols-rounded">history</span>
+                        <p>Your editing history will appear here</p>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <div class="canvas-container">
-                        <!-- Original image with drawing capability -->
-                        <div class="canvas-wrapper">
-                            <div class="canvas-header">
-                                <h3>Original</h3>
-                                <span class="help-badge" title="Draw on this image to create a mask">
-                                    <span class="material-icons">help_outline</span>
-                                </span>
+                
+                <div class="panel-content" id="settings-tab">
+                    <div class="panel-section">
+                        <div class="section-header">
+                            <span class="material-symbols-rounded">palette</span>
+                            <h3>Appearance</h3>
+                        </div>
+                        <div class="settings-options">
+                            <div class="setting-item">
+                                <span>Theme</span>
+                                <div class="select-wrapper">
+                                    <select id="theme-select">
+                                        <option value="system">System default</option>
+                                        <option value="light">Light</option>
+                                        <option value="dark">Dark</option>
+                                    </select>
+                                    <span class="material-symbols-rounded">arrow_drop_down</span>
+                                </div>
                             </div>
-                            <div class="canvas-content">
-                                <canvas id="input-canvas"></canvas>
+                            <div class="setting-item">
+                                <span>Accent Color</span>
+                                <div class="color-options">
+                                    <button class="color-option violet active" data-color="violet"></button>
+                                    <button class="color-option blue" data-color="blue"></button>
+                                    <button class="color-option teal" data-color="teal"></button>
+                                    <button class="color-option orange" data-color="orange"></button>
+                                    <button class="color-option pink" data-color="pink"></button>
+                                </div>
                             </div>
                         </div>
-
-                        <!-- Result image -->
-                        <div class="canvas-wrapper">
-                            <div class="canvas-header">
-                                <h3>Result</h3>
-                                <div id="progress-indicator" class="progress-indicator">
-                                    <div class="progress-bar">
-                                        <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%"></div>
-                                    </div>
-                                    <div id="progress-percentage">0%</div>
+                    </div>
+                    
+                    <div class="panel-section">
+                        <div class="section-header">
+                            <span class="material-symbols-rounded">straighten</span>
+                            <h3>Canvas</h3>
+                        </div>
+                        <div class="settings-options">
+                            <div class="setting-item">
+                                <span>Show grid</span>
+                                <label class="toggle">
+                                    <input type="checkbox" id="show-grid">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <span>Mask opacity</span>
+                                <div class="slider-row">
+                                    <input type="range" id="mask-opacity" min="10" max="80" value="50">
+                                    <span>50%</span>
                                 </div>
                             </div>
-                            <div class="canvas-content">
-                                <canvas id="result-canvas"></canvas>
-                                <div id="result-placeholder" class="placeholder-message">
-                                    <span class="material-icons">image</span>
-                                    <p>Result will appear here</p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Right Panel: Canvas -->
+            <div class="canvas-panel">
+                <div class="canvas-toolbar">
+                    <div class="canvas-tools">
+                        <button class="tool-btn active" title="Pan tool">
+                            <span class="material-symbols-rounded">pan_tool</span>
+                        </button>
+                        <button class="tool-btn" title="Zoom in">
+                            <span class="material-symbols-rounded">zoom_in</span>
+                        </button>
+                        <button class="tool-btn" title="Zoom out">
+                            <span class="material-symbols-rounded">zoom_out</span>
+                        </button>
+                        <button class="tool-btn" title="Reset view">
+                            <span class="material-symbols-rounded">fit_screen</span>
+                        </button>
+                    </div>
+                    <div class="canvas-view-toggle">
+                        <button class="view-btn active" data-view="side-by-side">
+                            <span class="material-symbols-rounded">view_agenda</span>
+                        </button>
+                        <button class="view-btn" data-view="before-after">
+                            <span class="material-symbols-rounded">compare</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="canvas-container">
+                    <!-- Original Canvas -->
+                    <div class="canvas-card">
+                        <div class="canvas-header">
+                            <h3>Original Image</h3>
+                            <div class="canvas-instructions">
+                                <span class="material-symbols-rounded">touch_app</span>
+                                <span>Draw on areas to edit</span>
+                            </div>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="input-canvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Result Canvas -->
+                    <div class="canvas-card">
+                        <div class="canvas-header">
+                            <h3>Result</h3>
+                            <div class="progress-wrapper">
+                                <div class="progress-bar">
+                                    <div id="progress-bar-fill" class="progress-bar-fill"></div>
                                 </div>
+                                <span id="progress-percentage">0%</span>
+                            </div>
+                        </div>
+                        <div class="canvas-wrapper">
+                            <canvas id="result-canvas"></canvas>
+                            <div id="result-placeholder" class="placeholder-content">
+                                <span class="material-symbols-rounded">image</span>
+                                <p>Your edited image will appear here</p>
                             </div>
                         </div>
                     </div>
@@ -217,25 +339,110 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <p>Powered by InstructPix2Pix running on macOS with Apple Silicon</p>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loader">
+                <div class="spinner">
+                    <div></div>
+                    <div></div>
+                    <div></div>
+                </div>
+            </div>
+            <p id="loading-message">Processing your image...</p>
         </div>
-    </footer>
+    </div>
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>About PixelAlchemy</h2>
+                <button class="close-button" onclick="hideModal('about-modal')">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="about-logo">
+                    <div class="logo-icon large">
+                        <span class="material-symbols-rounded">auto_awesome</span>
+                    </div>
+                    <div class="about-title">
+                        <h2>PixelAlchemy</h2>
+                        <p>Version 1.0</p>
+                    </div>
+                </div>
+                
+                <p>PixelAlchemy is a powerful AI-driven image editing tool that allows you to selectively edit portions of your images using natural language instructions.</p>
+                
+                <p>Powered by InstructPix2Pix technology, it understands both visual content and text prompts to transform your images exactly the way you want.</p>
+                
+                <h3>How to Use:</h3>
+                <ol>
+                    <li>Upload an image</li>
+                    <li>Draw on areas you want to edit</li>
+                    <li>Type an instruction like "make the sky cloudy" or "change to night time"</li>
+                    <li>Adjust settings if needed</li>
+                    <li>Click Apply Edit and watch the magic happen!</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tips Modal -->
+    <div id="tips-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Tips & Tricks</h2>
+                <button class="close-button" onclick="hideModal('tips-modal')">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tips-section">
+                    <h3>Writing Effective Prompts</h3>
+                    <ul>
+                        <li><strong>Be specific</strong> - "Add fluffy white clouds to the sky" works better than "change the sky"</li>
+                        <li><strong>Include visual details</strong> - Describe colors, textures, lighting, and style</li>
+                        <li><strong>Reference styles</strong> - Try "in the style of watercolor painting" or "like a vintage photograph"</li>
+                        <li><strong>Keep it concise</strong> - Focus on the most important elements you want to change</li>
+                    </ul>
+                </div>
+                
+                <div class="tips-section">
+                    <h3>Masking Tips</h3>
+                    <ul>
+                        <li><strong>Be precise</strong> - Carefully outline just the area you want to modify</li>
+                        <li><strong>Multiple areas</strong> - You can mask multiple disconnected regions for the same edit</li>
+                        <li><strong>Adjust brush size</strong> - Use a smaller brush for detailed areas</li>
+                        <li><strong>Soft vs. hard edges</strong> - For natural-looking results, avoid very sharp mask edges</li>
+                    </ul>
+                </div>
+                
+                <div class="tips-section">
+                    <h3>Advanced Settings</h3>
+                    <ul>
+                        <li><strong>Image Guidance</strong> - Higher values (3-5) preserve more of the original image</li>
+                        <li><strong>Text Guidance</strong> - Higher values (10-15) follow your prompt more strictly</li>
+                        <li><strong>Processing Steps</strong> - More steps (30+) give higher quality but take longer</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Hidden mask canvas -->
     <canvas id="mask-canvas" style="display: none;"></canvas>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <p id="loading-message">Loading model...</p>
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div class="container">
+            <p>PixelAlchemy © 2025 • Powered by InstructPix2Pix</p>
         </div>
-    </div>
+    </footer>
 
-    <!-- Script -->
+    <!-- Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
+

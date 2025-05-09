@@ -1,4 +1,46 @@
-// Main JavaScript for InstructPix2Pix Web Interface with Simplified UI
+// PixelAlchemy Main JavaScript
+
+// UI functions
+function showModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('visible');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function hideModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+}
+
+// Theme switching
+function setTheme(theme) {
+  if (theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.body.classList.add('dark-theme');
+    localStorage.setItem('pixelalchemy-theme', theme);
+  } else {
+    document.body.classList.remove('dark-theme');
+    localStorage.setItem('pixelalchemy-theme', theme);
+  }
+}
+
+// Color theme 
+function setColorTheme(color) {
+  document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
+  if (color !== 'violet') {
+    document.body.classList.add(`theme-${color}`);
+  }
+  localStorage.setItem('pixelalchemy-color', color);
+  
+  // Update active state on buttons
+  document.querySelectorAll('.color-option').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.color === color);
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   // Canvas elements
@@ -35,6 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const advancedHeader = document.getElementById('advanced-header');
   const advancedContent = document.getElementById('advanced-content');
   
+  // New UI elements
+  const themeToggle = document.getElementById('theme-toggle');
+  const themeSelect = document.getElementById('theme-select');
+  const panelTabs = document.querySelectorAll('.panel-tab');
+  const panelContents = document.querySelectorAll('.panel-content');
+  const colorOptions = document.querySelectorAll('.color-option');
+  const maskOpacitySlider = document.getElementById('mask-opacity');
+  const canvasViewButtons = document.querySelectorAll('.view-btn');
+  const canvasTools = document.querySelectorAll('.tool-btn');
+  
   // Drawing state
   let originalImage = null;
   let isDrawing = false;
@@ -44,6 +96,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let undoStack = [];
   let currentProcessId = null;
   let progressCheckInterval = null;
+  let maskOpacity = 0.5; // Default mask opacity
+  
+  // History management
+  let editHistory = [];
   
   // Initialize UI
   initializeUI();
@@ -55,16 +111,39 @@ document.addEventListener('DOMContentLoaded', () => {
   setupCanvasSizing();
   
   function initializeUI() {
+    // Load theme preference
+    const savedTheme = localStorage.getItem('pixelalchemy-theme') || 'system';
+    if (themeSelect) {
+      themeSelect.value = savedTheme;
+    }
+    setTheme(savedTheme);
+    
+    // Load color theme preference
+    const savedColor = localStorage.getItem('pixelalchemy-color') || 'violet';
+    setColorTheme(savedColor);
+    
     // Set initial values for sliders
     brushSizeValue.textContent = brushSizeSlider.value;
     imgGuidanceValue.textContent = imgGuidanceSlider.value;
     textGuidanceValue.textContent = textGuidanceSlider.value;
     stepsValue.textContent = stepsSlider.value;
     
-    // Initialize advanced settings accordion
-    advancedHeader.addEventListener('click', () => {
-      advancedHeader.classList.toggle('active');
-      advancedContent.classList.toggle('open');
+    if (maskOpacitySlider) {
+      maskOpacity = parseInt(maskOpacitySlider.value) / 100;
+      maskOpacitySlider.nextElementSibling.textContent = `${maskOpacitySlider.value}%`;
+    }
+    
+    // Example prompts functionality
+    const exampleChips = document.querySelectorAll('.example-chip');
+    exampleChips.forEach(chip => {
+      chip.addEventListener('click', function() {
+        const promptText = this.getAttribute('data-prompt');
+        if (promptInput && promptText) {
+          promptInput.value = promptText;
+          promptInput.dispatchEvent(new Event('input'));
+          updateButtonStates();
+        }
+      });
     });
     
     // Initialize button states
@@ -98,6 +177,17 @@ document.addEventListener('DOMContentLoaded', () => {
       stepsValue.textContent = stepsSlider.value;
     });
     
+    // Mask opacity control
+    if (maskOpacitySlider) {
+      maskOpacitySlider.addEventListener('input', () => {
+        maskOpacity = parseInt(maskOpacitySlider.value) / 100;
+        maskOpacitySlider.nextElementSibling.textContent = `${maskOpacitySlider.value}%`;
+        if (originalImage) {
+          redrawMask();
+        }
+      });
+    }
+    
     // Button actions
     clearMaskBtn.addEventListener('click', clearMask);
     undoBtn.addEventListener('click', undoLastStroke);
@@ -107,39 +197,128 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prompt input change to update button state
     promptInput.addEventListener('input', updateButtonStates);
     
-    // Handle drag and drop for image upload
-    const fileUploadLabel = document.querySelector('.file-upload-label');
-    
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-      fileUploadLabel.addEventListener(eventName, preventDefaults, false);
-    });
-    
-    function preventDefaults(e) {
-      e.preventDefault();
-      e.stopPropagation();
+    // Theme toggle
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        const isDark = document.body.classList.contains('dark-theme');
+        setTheme(isDark ? 'light' : 'dark');
+        if (themeSelect) {
+          themeSelect.value = isDark ? 'light' : 'dark';
+        }
+      });
     }
     
-    ['dragenter', 'dragover'].forEach(eventName => {
-      fileUploadLabel.addEventListener(eventName, () => {
-        fileUploadLabel.classList.add('highlight');
-      }, false);
+    // Theme select
+    if (themeSelect) {
+      themeSelect.addEventListener('change', () => {
+        setTheme(themeSelect.value);
+      });
+    }
+    
+    // Color theme options
+    colorOptions.forEach(option => {
+      option.addEventListener('click', () => {
+        setColorTheme(option.dataset.color);
+      });
     });
     
-    ['dragleave', 'drop'].forEach(eventName => {
-      fileUploadLabel.addEventListener(eventName, () => {
-        fileUploadLabel.classList.remove('highlight');
-      }, false);
+    // Panel tabs
+    panelTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabId = tab.dataset.tab;
+        
+        // Update active tab
+        panelTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        // Show corresponding content
+        panelContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === tabId) {
+            content.classList.add('active');
+          }
+        });
+      });
     });
     
-    fileUploadLabel.addEventListener('drop', (e) => {
-      const dt = e.dataTransfer;
-      const files = dt.files;
+    // Canvas view toggle
+    canvasViewButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const viewMode = btn.dataset.view;
+        
+        // Update active button
+        canvasViewButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        // Update canvas container class
+        const canvasContainer = document.querySelector('.canvas-container');
+        if (canvasContainer) {
+          canvasContainer.className = 'canvas-container';
+          canvasContainer.classList.add(viewMode);
+        }
+      });
+    });
+    
+    // Canvas tools
+    canvasTools.forEach(tool => {
+      tool.addEventListener('click', () => {
+        canvasTools.forEach(t => t.classList.remove('active'));
+        tool.classList.add('active');
+      });
+    });
+    
+    // Accordion functionality
+    if (advancedHeader && advancedContent) {
+      advancedHeader.addEventListener('click', () => {
+        advancedHeader.classList.toggle('active');
+        advancedContent.classList.toggle('open');
+      });
+    }
+    
+    // Handle drag and drop for image upload
+    const uploadArea = document.querySelector('.upload-area');
+    if (uploadArea) {
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+      });
       
-      if (files.length) {
-        imageUpload.files = files;
-        handleImageUpload({ target: { files } });
-      }
-    }, false);
+      ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+          uploadArea.classList.add('highlight');
+        }, false);
+      });
+      
+      ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, () => {
+          uploadArea.classList.remove('highlight');
+        }, false);
+      });
+      
+      uploadArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length) {
+          imageUpload.files = files;
+          handleImageUpload({ target: { files } });
+        }
+      }, false);
+    }
+    
+    // System color scheme change detection
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    if (darkModeMediaQuery.addEventListener) {
+      darkModeMediaQuery.addEventListener('change', e => {
+        if (themeSelect && themeSelect.value === 'system') {
+          setTheme('system');
+        }
+      });
+    }
+  }
+  
+  function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
   }
   
   function setupCanvasSizing() {
@@ -148,28 +327,28 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Resize on window resize
     window.addEventListener('resize', resizeCanvases);
+  }
+  
+  function resizeCanvases() {
+    // Get the current width of the canvas containers
+    const canvasWrappers = document.querySelectorAll('.canvas-wrapper');
+    if (!canvasWrappers.length) return;
     
-    function resizeCanvases() {
-      // Get the current width of the canvas containers
-      const containers = document.querySelectorAll('.canvas-content');
-      if (!containers.length) return;
-      
-      const containerWidth = containers[0].clientWidth;
-      const containerHeight = containers[0].clientHeight;
-      
-      if (containerWidth <= 0 || containerHeight <= 0) return;
-      
-      // Set all canvases to the same size
-      [inputCanvas, maskCanvas, resultCanvas].forEach(canvas => {
-        canvas.width = containerWidth;
-        canvas.height = containerHeight;
-      });
-      
-      // Redraw canvases if needed
-      if (originalImage) {
-        drawImageOnCanvas(originalImage, inputCanvas);
-        redrawMask();
-      }
+    const containerWidth = canvasWrappers[0].clientWidth;
+    const containerHeight = canvasWrappers[0].clientHeight;
+    
+    if (containerWidth <= 0 || containerHeight <= 0) return;
+    
+    // Set all canvases to the same size
+    [inputCanvas, maskCanvas, resultCanvas].forEach(canvas => {
+      canvas.width = containerWidth;
+      canvas.height = containerHeight;
+    });
+    
+    // Redraw canvases if needed
+    if (originalImage) {
+      drawImageOnCanvas(originalImage, inputCanvas);
+      redrawMask();
     }
   }
   
@@ -337,7 +516,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Draw the mask as a red overlay on input canvas
     inputCtx.globalCompositeOperation = 'source-over';
-    inputCtx.fillStyle = 'rgba(255, 0, 0, 0.5)';
     
     // Get mask data
     const maskImageData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
@@ -358,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
         overlayData[i] = 255; // R
         overlayData[i + 1] = 0; // G
         overlayData[i + 2] = 0; // B
-        overlayData[i + 3] = 128; // A (semi-transparent)
+        overlayData[i + 3] = Math.floor(255 * maskOpacity); // A (semi-transparent)
       }
     }
     
@@ -593,6 +771,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Enable download button
             downloadBtn.disabled = false;
             downloadBtn.classList.remove('disabled');
+            
+            // Add entry to history
+            addToHistory(data.result, promptInput.value);
           }
         } else if (data.status === 'error') {
           // Clear interval and reset process ID
@@ -674,10 +855,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const scaleX = originalImage.width / imageData.drawWidth;
     const scaleY = originalImage.height / imageData.drawHeight;
     
-    // Calculate offset adjustment
-    const offsetAdjustX = imageData.offsetX * scaleX;
-    const offsetAdjustY = imageData.offsetY * scaleY;
-    
     // Set white fill for the mask
     tempCtx.fillStyle = 'white';
     
@@ -723,7 +900,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const link = document.createElement('a');
     
     // Set link properties
-    link.download = `instructpix2pix-${Date.now()}.png`;
+    link.download = `pixelalchemy-${Date.now()}.png`;
     link.href = resultCanvas.toDataURL('image/png');
     
     // Append to document, click, and remove
@@ -736,8 +913,7 @@ document.addEventListener('DOMContentLoaded', () => {
     statusMessage.textContent = message;
     statusMessage.className = 'status-message';
     
-    if (type) {
-      statusMessage.classList.add(type);
+    if (type) { statusMessage.classList.add(type);
     }
   }
   
@@ -749,5 +925,73 @@ document.addEventListener('DOMContentLoaded', () => {
       loadingOverlay.classList.remove('visible');
     }
   }
-});
-
+  
+  function addToHistory(resultImage, prompt) {
+    // Create history entry
+    const historyEntry = {
+      id: Date.now(),
+      timestamp: new Date(),
+      resultImage: resultImage,
+      prompt: prompt
+    };
+    
+    // Add to history
+    editHistory.unshift(historyEntry);
+    
+    // Limit history to 10 entries
+    if (editHistory.length > 10) {
+      editHistory.pop();
+    }
+    
+    // Update history UI
+    updateHistoryUI();
+  }
+  
+  function updateHistoryUI() {
+    const historyTab = document.getElementById('history-tab');
+    if (!historyTab) return;
+    
+    // Clear existing history
+    historyTab.innerHTML = '';
+    
+    if (editHistory.length === 0) {
+      const emptyHistory = document.createElement('div');
+      emptyHistory.className = 'history-empty';
+      emptyHistory.innerHTML = `
+        <span class="material-symbols-rounded">history</span>
+        <p>Your editing history will appear here</p>
+      `;
+      historyTab.appendChild(emptyHistory);
+      return;
+    }
+    
+    // Add history entries
+    editHistory.forEach(entry => {
+      const historyItem = document.createElement('div');
+      historyItem.className = 'history-item';
+      
+      // Format timestamp
+      const date = new Date(entry.timestamp);
+      const formattedDate = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + 
+                          ' ' + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      
+      historyItem.innerHTML = `
+        <div class="history-img">
+          <img src="${entry.resultImage}" alt="Edit result">
+        </div>
+        <div class="history-details">
+          <p class="history-prompt">${entry.prompt}</p>
+          <p class="history-time">${formattedDate}</p>
+        </div>
+      `;
+      
+      // Add click event to reuse this edit
+      historyItem.addEventListener('click', () => {
+        promptInput.value = entry.prompt;
+        updateButtonStates();
+      });
+      
+      historyTab.appendChild(historyItem);
+    });
+  }
+ });

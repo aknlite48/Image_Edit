@@ -1,4 +1,6 @@
 import os
+if 'darwin' in os.uname().sysname.lower():
+    os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 import io
 import base64
 import torch
@@ -28,8 +30,15 @@ def load_model():
         return model
     
     # Check if MPS is available
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    print(f"Using device: {device}")
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print(f"Using device: CUDA (GPU)")
+    elif torch.backends.mps.is_available():
+        device = torch.device("mps")
+        print(f"Using device: MPS (Apple Silicon)")
+    else:
+        device = torch.device("cpu")
+        print(f"Using device: CPU")
     
     # Load model
     pipe = StableDiffusionInstructPix2PixPipeline.from_pretrained(
